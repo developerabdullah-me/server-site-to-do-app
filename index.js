@@ -36,6 +36,7 @@ async function run() {
 
     await client.connect();
     const ServiceCollection = client.db("ToDoApp").collection("todoService");
+    // const ToDoCollection = client.db("ToDoApp").collection("ToDoCollection");
 
     app.get("/myAddedItems", verifyJWT, async (req, res) => {
         const decodedEmail = req.decoded.email;
@@ -98,6 +99,32 @@ app.post('/completed-to-do', async (req, res) => {
         const result = await ServiceCollection.updateOne(filter, updatedDoc, options)
         res.send(result)
     })
+
+    // completed 
+    app.put('/tasks/completed/:email', verifyJWT, async (req, res) => {
+      const email = req.params.email
+      const requester = req.decoded.email
+      const requesterAc = await ServiceCollection.findOne({ email: requester })
+
+      if (requesterAc) {
+          const filter = { email: email }
+          const updatedDoc = {
+              $set: { role: 'completed' },
+          }
+          const result = await ServiceCollection.updateOne(filter, updatedDoc)
+          res.send(result)
+      }
+      else {
+          res.status(403).send({ message: 'Forbidden' });
+      }
+  })
+
+  app.get('/completedtask/:email', verifyJWT, async (req, res) => {
+    const email = req.params.email
+    const todo = await ServiceCollection.findOne({ email: email })
+    const isCompleted = todo?.role === 'completed'
+    res.send({ completed: isCompleted })
+})
 
   } finally {
   }
